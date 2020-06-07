@@ -2,7 +2,6 @@ from aip import AipSpeech
 import playsound
 import os
 import platform
-import time
 
 """ 你的 APPID AK SK """
 APP_ID = '11977145'
