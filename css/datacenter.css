@@ -1,0 +1,17 @@
+#main_style
+{
+    text-align:center;
+    background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);
+    background-repeat:no-repeat;
+    background-size:100% 100%;
+    -moz-background-size:100% 100%;
+}
+
+#title_style
+{
+    color:dimgrey; 
+    font-family:Arial,Times New Roman,KaiTi;
+    margin-top: 4%;
+    margin-bottom: 2%;
+    font-size: 48px;
+}

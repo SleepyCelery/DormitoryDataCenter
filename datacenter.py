@@ -8,7 +8,9 @@ from urllib.parse import quote, unquote
 import threading
 import platform
 from functools import wraps
+from ShadowsocksConfigSpider import ShadowsocksConfig
 import MusicSpider
+import multiprocessing
 import SpeechSynthesisRaspberry
 
 app = Flask(__name__, static_folder='./UploadFiles')
@@ -117,40 +119,46 @@ def index():
     ip = request.remote_addr
     write_log(ip, '进入首页')
     if ip in ip_table.keys():
-        welcome = '欢迎您,' + ip_table[ip]
+        welcome = '欢迎您,' + ip_table[ip] +'同志'
     else:
         welcome = '游客访问'
     return '''
-    <body>
-    <div style="text-align:center"><font></font><br/><font></font><br/>
-    <font face="宋体" size="+5" color="#000000">南昌大学190919数据中心</font><br/>
-    <font></font><br/><font></font><br/><font></font><br/>
-    <font face="宋体" size="+4" color="#000000">{}</font><br/>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/opendoor'>一键开门</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/playmusic'>来点小曲</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/uploadpage'>上传文件</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/downloadpage'>浏览文件</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/remotedownload'>远程下载</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/printermanager'>CUPS打印机管理</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/serverconfig'>服务器系统设置</a>
-    <font></font><br/>
-    <font></font><br/>
-    <a style="font-size: 45px;" color='#0000CD' href='/readlog'>日志查询</a>
-    <div>
+    <!DOCTYPE html>
+    <html lang="cn">
+    
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/datacenter.css" />
+    <title>Document</title>
+    </head>
+    <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+    <div style="text-align:center;">
+        <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心</p>
+        <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+            <p style="color:firebrick">{}</p>
+            
+            <div style="font-size: 24px;">
+                <span>
+                      <script type="text/javascript">
+                        var date = new Date();
+                        var day= 202-date.getDate();
+                        document.write("今天是：" + date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日" + " 星期" + "日一二三四五六".charAt(date.getDay()));
+                        document.write(" 距考研还有"+day+"天");
+                      </script>
+                </span>
+            </div>
+
+            <p><a href='/opendoor'  style="color: dimgrey">一键开门</a></p>
+            <p><a href='/playmusic'  style="color: dimgrey">来点小曲</a></p>
+            <p><a href='/uploadpage'  style="color: dimgrey">上传文件</a></p>
+            <p><a href='/downloadpage'  style="color: dimgrey">浏览文件</a></p>
+            <p><a href='/remotedownload'  style="color: dimgrey">远程下载</a> </p>
+            <p><a href='/printermanager'  style="color: dimgrey">CUPS打印机管理</a></p>
+            <p><a href='/serverconfig'  style="color: dimgrey">服务器系统设置</a></p>
+            <p><a href='/readlog'  style="color: dimgrey">日志查询</a></p>
+        </div>
+    </div>
     '''.format(welcome)
 
 
@@ -161,6 +169,7 @@ def printermanager():
     return redirect('http://ncu190919.com:631/', code=302)
 
 
+#废弃
 @app.route('/opendoorpage')
 @passport
 def opendoorpage():
@@ -179,7 +188,7 @@ def opendoorpage():
     </div>
     '''
 
-
+#废弃
 @app.route('/elec')
 @passport
 def elec():
@@ -233,6 +242,12 @@ def search():
 @passport
 def opendoor():
     global time_last_request
+    global ip_table
+    ip = request.remote_addr
+    if ip in ip_table.keys():
+        welcome = ip_table[ip] 
+    else:
+        welcome = '游客访问'
     if time.time() - time_last_request >= 20:
         try:
             status = send_cmd_withback('192.168.1.145', 8080, b'190919111111')
@@ -240,20 +255,55 @@ def opendoor():
                 time_last_request = time.time()
                 # SpeechSynthesisRaspberry.speech('{},欢迎回家!'.format(ip_table[request.remote_addr]))
                 write_log(request.remote_addr, '使用了一键开门,开门成功')
-                return '<h1>门已开启!</h1>'
+                return '''
+                <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                    <div style="text-align:center;">
+                        <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                        <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                            <h2 style="color:firebrick">欢迎回家，{}!</h2>
+                            <h2 style="color:firebrick">门已为您开启!</h2>
+                            <iframe src="https://cloud.mokeyjay.com/pixiv" frameborder="0"  style="width:240px; height:380px;"></iframe> 
+                        </div>
+                    </div>
+                '''.format(welcome)
             elif status == 'Er':
                 write_log(request.remote_addr, '使用了一键开门,但由于开门密钥不正确,开门失败!')
                 return '<h1>由于开门密钥不正确,开门失败!请管理员检查代码!</h1>'
             elif status == 'Timeout':
                 write_log(request.remote_addr, '使用了一键开门,但由于与门锁的连接超时,开门失败!')
-                return '<h1>由于与门锁的连接超时,开门失败!请检查门锁是否正常运行!</h1>'
+                return '''
+                <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                    <div style="text-align:center;">
+                        <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                        <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                            <h2 style="color:firebrick">发生错误！</h2>
+                            <h2 style="color:firebrick">门锁的连接超时,开门失败!</h2>
+                        </div>
+                    </div>
+                '''
         except:
             write_log(request.remote_addr, '使用了一键开门,但由于与门锁的连接超时,开门失败!')
-            return '<h1>由于与门锁的连接超时,开门失败!请检查门锁是否正常运行!</h1>'
+            return '''
+            <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                <div style="text-align:center;">
+                    <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                    <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                        <h2 style="color:firebrick">发生错误！</h2>
+                        <h2 style="color:firebrick">门锁的连接超时,开门失败!</h2>
+                    </div>
+                </div>
+            '''
     else:
         write_log(request.remote_addr, '使用了一键开门,由于请求过于频繁,开门失败')
-        return '<h1>请求过于频繁,请{}秒后再试!</h1>'.format(20 - int((time.time() - time_last_request)))
-
+        return '''
+            <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                <div style="text-align:center;">
+                    <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                    <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                        <h2 style="color:firebrick">门锁正在复位,请{}秒后再试!</h2>
+                    </div>
+                </div>      
+        '''.format(20 - int((time.time() - time_last_request)))
 
 @app.route('/downloadpage')
 def downloadpage():
@@ -278,9 +328,34 @@ def downloadpage():
             "/delete?filename=" + quote(url_dict_sorted[i][0]),
             url_dict_sorted[i][1][2][0])
     disk_info = get_disk_info()
-    return '''<h3>总存储空间:{:.3f}GB  已用存储空间:{:.3f}GB  可用存储空间:{:.3f}GB  已占用比例:{:.3f}%</h3><h3>当前远程打印仅支持doc docx xls xlsx ppt pptx pdf jpg png bmp格式,且office格式需要等待转换!</h3>
-    <table id="list"><thead><tr><th style="width:50%"></th><th style="width:20%"></th><th style="width:10%"></th><th style="width:10%"></th><th style="width:10%"></th></tr></thead>
-    <tbody><tr><td class="link"><a style="font-size: 25px;" title="文件名">文件名</a></td><td style="font-size: 25px;" class="size">文件大小</td><td class="print"><a style="font-size: 25px;" title="打印"></a></td><td><a style="font-size: 25px;" title="删除文件"></a></td><td><a style="font-size: 25px;" title="上传日期">上传日期</a></td></tr>{}</tbody></table>
+    return '''
+    <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;font-family:Arial,Times New Roman,KaiTi;text-align:center;color: dimgrey;">
+        <div>
+            <p style="font-size: 18px;">总存储空间:{:.2f}GB 已用存储空间:{:.2f}GB 可用存储空间:{:.2f}GB 已占用比例:{:.1f}%</p>
+            <p style="font-size: 18px;">当前远程打印仅支持doc docx xls xlsx ppt pptx pdf jpg png bmp格式,且office格式需要等待转换!</p>
+            <h1 style="color:firebrick">文件管理</h1>
+            <table style="text-align: center;">
+                <thead>
+                    <tr>
+                        <th style="width:50%"></th>
+                        <th style="width:15%"></th>
+                        <th style="width:5%"></th>
+                        <th style="width:5%"></th>
+                        <th style="width:25%"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="link"><a style="font-size: 24px;" title="文件名">文件名</a></td>
+                        <td style="font-size: 24px;" class="size">文件大小</td>
+                        <td class="print"><a style="font-size: 24px;" title="打印"></a></td>
+                        <td><a style="font-size: 24px;" title="删除文件"></a></td>
+                        <td><a style="font-size: 24px;" title="上传日期">上传日期</a></td>
+                    </tr>{}
+                </tbody>
+            </table>
+        </div>
+    </body>
     '''.format(disk_info[0] / 1024 / 1024 / 1024, disk_info[1] / 1024 / 1024 / 1024,
                disk_info[2] / 1024 / 1024 / 1024, disk_info[3] * 100, display_html)
 
@@ -306,19 +381,30 @@ def upload_file():
             filename = filename_filter(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             write_log(request.remote_addr, '上传了名为{}的文件'.format(filename))
-            return '<h1>{}上传成功!</h1>'.format(filename)
+            return '''
+                <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                    <div style="text-align:center;">
+                        <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                        <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                            <h2 style="color:firebrick">{}上传成功!</h2>
+                            <h2 style="color:firebrick">奖励一个吻</h2>
+                        </div>
+                    </div>
+            '''.format(filename)
     else:
         write_log(request.remote_addr, '进入文件上传页面')
         disk_info = get_disk_info()  # return (all_space, used_space, free_space, used_percent)
         return '''
-        <!doctype html>
-        <title>上传文件</title>
-        <h3>总存储空间:{:.3f}GB  已用存储空间:{:.3f}GB  可用存储空间:{:.3f}GB  已占用比例:{:.3f}%</h3>
-        <h1>上传文件(只能上传文件,不允许上传文件夹!)</h1>
-        <form action="" method=post enctype=multipart/form-data>
-          <p><input type=file name=file>
-             <input type=submit value=上传>
-        </form>
+        <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;font-family:Arial,Times New Roman,KaiTi;text-align:center;color: dimgrey;">
+            <div>
+                <p style="font-size: 18px;">总存储空间:{:.2f}GB 已用存储空间:{:.2f}GB 可用存储空间:{:.2f}GB 已占用比例:{:.1f}%</p>
+                <p style="font-size: 32px;color:firebrick;">当前只能上传单个文件!</p>
+                <form action="" method=post enctype=multipart/form-data>
+                    <p><input type=file name=file>
+                        <input type=submit value=点击上传>
+                </form>
+            </div>
+        </body>
         '''.format(disk_info[0] / 1024 / 1024 / 1024, disk_info[1] / 1024 / 1024 / 1024,
                    disk_info[2] / 1024 / 1024 / 1024, disk_info[3] * 100)
 
@@ -333,26 +419,28 @@ def play_music():
     if request.method == 'GET':
         write_log(request.remote_addr, '进入点歌页面')
         return '''
-        <!doctype html>
-        <div style="text-align:center">
-        <title>来点小曲</title>
-        <h1>输入歌曲名</h1>
-        <form action="" method=post enctype=multipart/form-data>
-          <p><input name=MusicName></p>
-          <p>音源选择:
-          <select name=Source>
-            <option value="网易云音乐搜索">网易云音乐</option>
-            <option value="QQ音乐搜索">QQ音乐</option>
-            <option value="酷狗音乐搜索">酷狗音乐</option>
-            <option value="酷我音乐搜索">酷我音乐</option>
-            <option value="虾米音乐搜索">虾米音乐</option>
-            <option value="喜马拉雅搜索">喜马拉雅</option>
-            <option value="百度音乐搜索">百度音乐</option>
-            <option value="咪咕音乐搜索">咪咕音乐</option>
-            </select></p>
-          <p><input type=submit name=button value=搜索><input type=submit name=button value=停止播放></p>
-        </form>
-        </div>
+        <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;text-align:center;">
+            <div sytle="position: absolute;top: 0;bottom: 0;left: 0;right: 0;margin: auto;height: 240px;width: 70%;">
+                <h1>请输入歌曲名</h1>
+                <div style="color:dimgrey; font-size: 24px;font-family:Arial,Times New Roman,KaiTi;">
+                    <form action="" method=post enctype=multipart/form-data>
+                        <p><input name=MusicName></p>
+                        <p>音源选择:
+                            <select name=Source>
+                                <option value="网易云音乐搜索">网易云音乐</option>
+                                <option value="QQ音乐搜索">QQ音乐</option>
+                                <option value="酷狗音乐搜索">酷狗音乐</option>
+                                <option value="酷我音乐搜索">酷我音乐</option>
+                                <option value="虾米音乐搜索">虾米音乐</option>
+                                <option value="喜马拉雅搜索">喜马拉雅</option>
+                                <option value="百度音乐搜索">百度音乐</option>
+                                <option value="咪咕音乐搜索">咪咕音乐</option>
+                            </select></p>
+                        <p><input type=submit name=button value=搜索><input type=submit name=button value=停止播放></p>
+                    </form>
+                </div>
+            </div>
+        </body>
         '''
     elif request.method == 'POST':
         source_dict = {'网易云音乐搜索': 'netease', '咪咕音乐搜索': 'migu', '虾米音乐搜索': 'xiami', 'QQ音乐搜索': 'qq', '百度音乐搜索': 'baidu',
@@ -374,8 +462,15 @@ def playsound_url():
     MusicSpider.download_music_by_url(url)
     MusicSpider.playmusic_downloaded('temp.mp3')
     write_log(request.remote_addr, '点歌')
-    return '正在播放音乐!'
-
+    return '''
+    <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+        <div style="text-align:center;">
+            <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+            <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                <h2 style="color:firebrick">当前曲目播放完毕！</h2>
+            </div>
+        </div>
+    '''
 
 @app.route('/delete')
 @passport
@@ -450,15 +545,17 @@ def remodedownload():
         disk_info = get_disk_info()  # return (all_space, used_space, free_space, used_percent)
         write_log(request.remote_addr, '进入了远程下载页面')
         return '''
-        <!doctype html>
-        <title>远程下载</title>
-        <h3>总存储空间:{:.3f}GB  已用存储空间:{:.3f}GB  可用存储空间:{:.3f}GB  已占用比例:{:.3f}%</h3>
-        <h1>远程下载</h1>
-        <form action="" method=post enctype=multipart/form-data>
-          <p><input style="width:500px;" type=url name=url placeholder=可填写HTTP_FTP_Magnet_BT下载地址></p>
-        <p><input style="width:500px;" type=filename name=filename placeholder=输入您想要保存的文件名,必须加上后缀,若此栏为空,默认使用下载文件作为文件名></p>
-             <input type=submit value=加入下载队列>
-        </form>'''.format(disk_info[0] / 1024 / 1024 / 1024, disk_info[1] / 1024 / 1024 / 1024,
+       <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;font-family:Arial,Times New Roman,KaiTi;text-align:center;color: dimgrey;">
+            <div>
+                <p style="font-size: 18px;">总存储空间:{:.2f}GB 已用存储空间:{:.2f}GB 可用存储空间:{:.2f}GB 已占用比例:{:.1f}%</p>
+                <h1 style="color:firebrick">远程下载</h1>
+                <form action="" method=post enctype=multipart/form-data>
+                <p><input style="width:500px;" type=url name=url placeholder=可填写HTTP_FTP_Magnet_BT下载地址></p>
+                <p><input style="width:500px;" type=filename name=filename placeholder=输入您想要保存的文件名,必须加上后缀,若此栏为空,默认使用下载文件作为文件名></p>
+                    <input type=submit value=加入下载队列>
+                </form>
+            </div>
+        </body>'''.format(disk_info[0] / 1024 / 1024 / 1024, disk_info[1] / 1024 / 1024 / 1024,
                           disk_info[2] / 1024 / 1024 / 1024, disk_info[3] * 100)
     elif request.method == 'POST':
         url = request.form.get('url')
@@ -481,6 +578,7 @@ def remodedownload():
 @app.route('/readlog')
 @passport
 def read_log():
+    
     with open('datacenter.log', mode='r', encoding='utf-8') as log:
         info = log.read().split('\n')
     return_string = ''
@@ -494,14 +592,18 @@ def read_log():
 def server_config():
     if request.method == 'GET':
         return '''
-        <h1>服务器系统设置</h1>
-        <form action="/volumnset" method=post enctype=multipart/form-data>
-        <p><input style="width:140px" type=text name=vol placeholder=输入音量大小(0-100)>
-            <input type=submit value=调节音量></p>
-            </form>
-        <form action="/startvncserver" method=post enctype=multipart/form-data>
-        <p><input type=submit value=启动TightVNCServer></p>
-            </form>
+        <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;text-align:center;">
+            <div sytle="position: absolute;top: 0;bottom: 0;left: 0;right: 0;margin: auto;height: 240px;width: 70%;">
+                <h1>服务器系统设置</h1>
+                <form action="/volumnset" method=post enctype=multipart/form-data>
+                <p><input style="width:140px" type=text name=vol placeholder=输入音量大小(0-100)>
+                    <input type=submit value=调节音量></p>
+                    </form>
+                <form action="/startvncserver" method=post enctype=multipart/form-data>
+                <p><input type=submit value=启动TightVNCServer></p>
+                    </form>
+            </div>
+        </body>
         '''
 
 
@@ -512,7 +614,15 @@ def set_volumn():
         vol = request.form.get('vol')
         os.system("sudo amixer set Master {}%".format(vol))
         write_log(request.remote_addr, '调节系统音量到{}%'.format(vol))
-        return "<h1>已将服务器系统音量调为{}%!</h1>".format(vol)
+        return '''
+        <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+            <div style="text-align:center;">
+                <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                    <h2 style="color:firebrick">系统音量已调至{}%!</h2>
+                </div>
+            </div>
+        '''.format(vol)
 
 
 @app.route('/startvncserver', methods=['POST'])

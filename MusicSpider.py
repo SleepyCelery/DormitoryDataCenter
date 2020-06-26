@@ -54,9 +54,16 @@ def playmusic_downloaded(name):
 def show_html_list(name, source='netease', page=1, debugmode=False):
     try:
         info_list = get_music_by_name(name, source, page)
+
         for index, info in enumerate(info_list):
             if 'http' in info[-1]:
-                info_list[index][-1] = '<a href="{}">播放</a>'.format('/playsoundbyurl?playurl=' + info[-1])
+                info_list[index][-1] = '''
+                <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;font-family:Arial,Times New Roman,KaiTi;font-size: 24px;text-align:center;color: dimgrey;">
+                    <div>
+                        <a href="{}">播放</a>
+                    </div>
+                </body>
+                '''.format('/playsoundbyurl?playurl=' + info[-1])
         html = '<table border="1" style="text-align:center">{}</table>'
         tmp = ''
         tmp += add_html_row(['歌曲名', '歌手', '歌曲播放链接'])
