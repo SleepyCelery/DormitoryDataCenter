@@ -9,6 +9,7 @@ import threading
 import platform
 from functools import wraps
 import MusicSpider
+import subprocess
 import SpeechSynthesisRaspberry
 
 app = Flask(__name__, static_folder='./UploadFiles')
@@ -43,7 +44,7 @@ def passport(func):
                 <body>
                 <div style="text-align:center">
                 <font></font><br/><font></font><br/><font></font><br/>
-                <font face="宋体" size="+5" color="#000000">本机未授权!</font><br/>
+                <font face="宋体" size="+5" color="#FF0000">本机未授权!</font><br/>
                 </div>
                 '''
 
@@ -117,7 +118,7 @@ def index():
     ip = request.remote_addr
     write_log(ip, '进入首页')
     if ip in ip_table.keys():
-        welcome = '欢迎您,' + ip_table[ip] +'同志'
+        welcome = '欢迎您,' + ip_table[ip] + '同志'
     else:
         welcome = '游客访问'
     return '''
@@ -167,7 +168,7 @@ def printermanager():
     return redirect('http://ncu190919.com:631/', code=302)
 
 
-#废弃
+# 废弃
 @app.route('/opendoorpage')
 @passport
 def opendoorpage():
@@ -186,7 +187,8 @@ def opendoorpage():
     </div>
     '''
 
-#废弃
+
+# 废弃
 @app.route('/elec')
 @passport
 def elec():
@@ -243,7 +245,7 @@ def opendoor():
     global ip_table
     ip = request.remote_addr
     if ip in ip_table.keys():
-        welcome = ip_table[ip] 
+        welcome = ip_table[ip]
     else:
         welcome = '游客访问'
     if time.time() - time_last_request >= 20:
@@ -302,6 +304,7 @@ def opendoor():
                     </div>
                 </div>      
         '''.format(20 - int((time.time() - time_last_request)))
+
 
 @app.route('/downloadpage')
 def downloadpage():
@@ -408,7 +411,7 @@ def upload_file():
 
 
 def kill_process(key):
-    os.system('sudo kill -9 $(pidof {})'.format(key))
+    subprocess.Popen('sudo kill -9 $(pidof {})'.format(key))
 
 
 @app.route('/playmusic', methods=['GET', 'POST'])
@@ -455,7 +458,7 @@ def play_music():
 @passport
 def playsound_url():
     if platform.system() == 'Linux':
-        os.system('sudo kill -9 $(pidof {})'.format('mplayer'))
+        subprocess.Popen('sudo kill -9 $(pidof {})'.format('mplayer'))
     url = request.args.get('playurl')
     MusicSpider.download_music_by_url(url)
     MusicSpider.playmusic_downloaded('temp.mp3')
@@ -465,10 +468,11 @@ def playsound_url():
         <div style="text-align:center;">
             <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
             <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
-                <h2 style="color:firebrick">当前曲目播放完毕！</h2>
+                <h2 style="color:firebrick">歌曲已经开始播放！</h2>
             </div>
         </div>
     '''
+
 
 @app.route('/delete')
 @passport
@@ -576,7 +580,6 @@ def remodedownload():
 @app.route('/readlog')
 @passport
 def read_log():
-    
     with open('datacenter.log', mode='r', encoding='utf-8') as log:
         info = log.read().split('\n')
     return_string = ''
@@ -627,7 +630,7 @@ def set_volumn():
 @passport
 def start_vncserver():
     if request.method == 'POST':
-        os.system("tightvncserver")
+        subprocess.Popen("tightvncserver")
         write_log(request.remote_addr, '启动了TightVNCServer服务!')
         return "<h1>TightVNCServer已启动!</h1>"
 

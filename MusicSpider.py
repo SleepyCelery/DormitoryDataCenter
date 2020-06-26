@@ -3,6 +3,7 @@ from UserAgentList import get_useragent
 import os
 import pygame
 import platform
+import subprocess
 
 
 def add_html_row(row_list):
@@ -46,8 +47,8 @@ def playmusic_downloaded(name):
         pygame.mixer.music.load('temp.mp3')
         pygame.mixer.music.play()
     elif platform.system() == 'Linux':
-        os.system('sudo kill -9 $(pidof {})'.format('mplayer'))
-        os.system('setsid sudo mplayer {} < /dev/null > /dev/null 2>1&'.format(name))
+        subprocess.Popen('sudo kill -9 $(pidof {})'.format('mplayer'))
+        subprocess.Popen('setsid sudo mplayer {} < /dev/null > /dev/null 2>1&'.format(name))
     return
 
 
