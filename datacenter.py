@@ -8,9 +8,7 @@ from urllib.parse import quote, unquote
 import threading
 import platform
 from functools import wraps
-from ShadowsocksConfigSpider import ShadowsocksConfig
 import MusicSpider
-import multiprocessing
 import SpeechSynthesisRaspberry
 
 app = Flask(__name__, static_folder='./UploadFiles')
