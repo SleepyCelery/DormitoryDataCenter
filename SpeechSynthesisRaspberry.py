@@ -2,6 +2,7 @@ from aip import AipSpeech
 import playsound
 import subprocess
 import platform
+import os
 
 """ 你的 APPID AK SK """
 APP_ID = '11977145'
@@ -34,8 +35,8 @@ def speech(content):
         playsound.playsound("speech.mp3", True)
     elif platform.system() == 'Linux':
         saveaudio(generate(content))
-        subprocess.Popen('sudo kill -9 $(pidof {})'.format('mplayer'))
-        subprocess.Popen('setsid sudo mplayer speech.mp3 < /dev/null > /dev/null 2>1&')
+        os.system('sudo kill -9 $(pidof {})'.format('mplayer'))
+        subprocess.Popen(['setsid', 'sudo', 'mplayer', 'speech.mp3', '<', '/dev/null', '>', '/dev/null', '2>1&'])
 
 
 if __name__ == '__main__':

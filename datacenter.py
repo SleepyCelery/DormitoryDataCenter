@@ -253,7 +253,7 @@ def opendoor():
             status = send_cmd_withback('192.168.1.145', 8080, b'190919111111')
             if status == 'OK':
                 time_last_request = time.time()
-                # SpeechSynthesisRaspberry.speech('{},欢迎回家!'.format(ip_table[request.remote_addr]))
+                SpeechSynthesisRaspberry.speech('{},欢迎回家!'.format(ip_table[request.remote_addr]))
                 write_log(request.remote_addr, '使用了一键开门,开门成功')
                 return '''
                 <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
@@ -281,6 +281,21 @@ def opendoor():
                         </div>
                     </div>
                 '''
+            else:
+                time_last_request = time.time()
+                SpeechSynthesisRaspberry.speech('{},欢迎回家,门锁没有给我回复正确的指令,需要检查一下!'.format(ip_table[request.remote_addr]))
+                write_log(request.remote_addr, '使用了一键开门,发送指令成功但未收到预期回复!')
+                return '''
+                                <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
+                                    <div style="text-align:center;">
+                                        <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
+                                        <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
+                                            <h2 style="color:firebrick">欢迎回家，{}!</h2>
+                                            <h2 style="color:firebrick">开门指令已下达,但未收到来自门锁预期回复,请检查门锁状态!</h2>
+                                            <iframe src="https://cloud.mokeyjay.com/pixiv" frameborder="0"  style="width:240px; height:380px;"></iframe> 
+                                        </div>
+                                    </div>
+                                '''.format(welcome)
         except:
             write_log(request.remote_addr, '使用了一键开门,但由于与门锁的连接超时,开门失败!')
             return '''
@@ -388,7 +403,6 @@ def upload_file():
                         <p style="color:dimgrey; font-family:Arial,Times New Roman,KaiTi;margin-top: 2%;margin-bottom: 2%;font-size: 48px;">南昌大学190919数据中心提醒您</p>
                         <div style="font-size: 36px;font-family:Arial,Times New Roman,KaiTi;">
                             <h2 style="color:firebrick">{}上传成功!</h2>
-                            <h2 style="color:firebrick">奖励一个吻</h2>
                         </div>
                     </div>
             '''.format(filename)
@@ -411,7 +425,7 @@ def upload_file():
 
 
 def kill_process(key):
-    subprocess.Popen('sudo kill -9 $(pidof {})'.format(key))
+    os.system('sudo kill -9 $(pidof {})'.format(key))
 
 
 @app.route('/playmusic', methods=['GET', 'POST'])
@@ -458,7 +472,7 @@ def play_music():
 @passport
 def playsound_url():
     if platform.system() == 'Linux':
-        subprocess.Popen('sudo kill -9 $(pidof {})'.format('mplayer'))
+        os.system('sudo kill -9 $(pidof {})'.format('mplayer'))
     url = request.args.get('playurl')
     MusicSpider.download_music_by_url(url)
     MusicSpider.playmusic_downloaded('temp.mp3')

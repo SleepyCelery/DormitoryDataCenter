@@ -34,11 +34,9 @@ def get_music_by_name(name, source='netease', page=1):
 
 
 def download_music_by_url(url: str):
-    response = requests.get(url, headers={'User-Agent':get_useragent()})
+    response = requests.get(url, headers={'User-Agent': get_useragent()})
     with open('temp.mp3', mode='wb') as music:
         music.write(response.content)
-
-
 
 
 def playmusic_downloaded(name):
@@ -47,8 +45,8 @@ def playmusic_downloaded(name):
         pygame.mixer.music.load('temp.mp3')
         pygame.mixer.music.play()
     elif platform.system() == 'Linux':
-        subprocess.Popen('sudo kill -9 $(pidof {})'.format('mplayer'))
-        subprocess.Popen('setsid sudo mplayer {} < /dev/null > /dev/null 2>1&'.format(name))
+        os.system('sudo kill -9 $(pidof {})'.format('mplayer'))
+        subprocess.Popen(['sudo', 'mplayer', '{}'.format(name)])
     return
 
 
