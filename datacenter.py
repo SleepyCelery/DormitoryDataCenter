@@ -168,76 +168,6 @@ def printermanager():
     return redirect('http://ncu190919.com:631/', code=302)
 
 
-# 废弃
-@app.route('/opendoorpage')
-@passport
-def opendoorpage():
-    write_log(request.remote_addr, '进入一键开门页面')
-    return '''
-    <body>
-    <div style="text-align:center">
-    <font></font><br/><font></font><br/><font></font><br/>
-    <font face="宋体" size="+5" color="#000000">按下按钮以开门</font><br/>
-    <font></font><br/>
-    <font></font><br/>
-    <form action ='/opendoor' method='post'>
-        <button type="submit" class="opendoor"
-        style="height:70px;width:200px;font-size: 40px;">一键开门</button> 
-    </form>
-    </div>
-    '''
-
-
-# 废弃
-@app.route('/elec')
-@passport
-def elec():
-    write_log(request.remote_addr, '进入电费查询页面')
-    return '''
-        <body>
-        <div style="text-align:center">
-        <font></font><br/><font></font><br/><font></font><br/>
-        <font face="宋体" size="+5" color="#000000">南昌大学寝室电量查询</font><br/>
-        <font face="宋体" size="+3" color="#000000">支持批量查询,用/隔开</font><br/>
-        <font face="宋体" size="+3" color="#000000">示例:190919或190919/200825</font><br/>
-        <font></font><br/>
-        <font></font><br/>
-        <form action ='/search' method='post'>
-            <input type="txt"  rows="2" cols="10" placeholder="请输入寝室号"  
-            name='dormitory' style="height:40px;width:200px;">  
-            <button type="submit" class="dormitory-submit"
-            style="height:38px;width:60px;">查询</button> 
-        </form>
-        </div>
-        '''
-
-
-@app.route('/search', methods=['POST'])
-@passport
-def search():
-    dormitories = request.form['dormitory'].split('/')
-    info = []
-    ncuos = requests.Session()
-    return_string = ''
-    try:
-        for dormitory in dormitories:
-            response = ncuos.post('https://spider.ncuos.com/spider/electricity', data={'dormitory': dormitory})
-            info_dict = dict(json.loads(response.text))
-            info_dict['dormitory'] = dormitory
-            info.append(info_dict)
-        for i in info:
-            elec = i['remaining_elec']
-            money = i['remaining_money']
-            dormitory = i['dormitory']
-            return_string += '<h1>寝室号:{},剩余电量:{}度,剩余金额:{}元</h1>'.format(dormitory, elec, money)
-        write_log(request.remote_addr, '查询了寝室号为{}的电费,查询成功'.format(dormitories))
-        return return_string
-        # return '<h1>寝室号:{},剩余电量:{}度,剩余金额:{}元</h1>'.format(dormitory, elec, money)
-    except:
-        write_log(request.remote_addr, '查询了寝室号为{}的电费,查询失败'.format(dormitories))
-        return '<h1>查询数据出错,请输入正确的寝室号!</h1>'
-
-
 @app.route('/opendoor', methods=['POST', 'GET'])
 @passport
 def opendoor():
@@ -253,7 +183,7 @@ def opendoor():
             status = send_cmd_withback('192.168.1.145', 8080, b'190919111111')
             if status == 'OK':
                 time_last_request = time.time()
-                SpeechSynthesisRaspberry.speech('{},欢迎回家!'.format(ip_table[request.remote_addr]))
+                #SpeechSynthesisRaspberry.speech('{},欢迎回家!'.format(ip_table[request.remote_addr]))
                 write_log(request.remote_addr, '使用了一键开门,开门成功')
                 return '''
                 <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
@@ -283,7 +213,7 @@ def opendoor():
                 '''
             else:
                 time_last_request = time.time()
-                SpeechSynthesisRaspberry.speech('{},欢迎回家,门锁没有给我回复正确的指令,需要检查一下!'.format(ip_table[request.remote_addr]))
+                #SpeechSynthesisRaspberry.speech('{},欢迎回家,门锁没有给我回复正确的指令,需要检查一下!'.format(ip_table[request.remote_addr]))
                 write_log(request.remote_addr, '使用了一键开门,发送指令成功但未收到预期回复!')
                 return '''
                                 <body style="background-image: url(http://www.pptbz.com/d/file/p/201708/a1d07b6201af8f574b6539cb724bbc16.png);background-repeat:no-repeat;background-size:100% 100%;-moz-background-size:100% 100%;">
@@ -614,9 +544,6 @@ def server_config():
                 <p><input style="width:140px" type=text name=vol placeholder=输入音量大小(0-100)>
                     <input type=submit value=调节音量></p>
                     </form>
-                <form action="/startvncserver" method=post enctype=multipart/form-data>
-                <p><input type=submit value=启动TightVNCServer></p>
-                    </form>
             </div>
         </body>
         '''
@@ -640,13 +567,6 @@ def set_volumn():
         '''.format(vol)
 
 
-@app.route('/startvncserver', methods=['POST'])
-@passport
-def start_vncserver():
-    if request.method == 'POST':
-        subprocess.Popen("tightvncserver")
-        write_log(request.remote_addr, '启动了TightVNCServer服务!')
-        return "<h1>TightVNCServer已启动!</h1>"
 
 
 if __name__ == '__main__':
